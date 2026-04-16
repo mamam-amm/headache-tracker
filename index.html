@@ -4,7 +4,1237 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>頭痛・体調ログ</title>
-<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.googlea<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>頭痛・体調ログ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #21262d;
+    --border: rgba(255,255,255,0.08);
+    --accent: #58a6ff;
+    --accent2: #bc8cff;
+    --warn: #f78166;
+    --ok: #3fb950;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    padding-bottom: 80px;
+  }
+
+  /* ヘッダー */
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px;
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .header-back {
+    background: none; border: none; color: var(--muted);
+    font-size: 20px; cursor: pointer; padding: 4px 8px 4px 0;
+    display: none;
+  }
+  .header-title { font-size: 17px; font-weight: 700; color: var(--text); }
+  .header-sub { font-size: 11px; color: var(--muted); margin-left: auto; }
+
+  /* ページ */
+  .page { display: none; max-width: 480px; margin: 0 auto; padding: 16px; }
+  .page.active { display: block; }
+
+  /* カード */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+
+  /* ホーム統計 */
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .stat-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px; text-align: center;
+  }
+  .stat-num { font-size: 36px; font-weight: 900; color: var(--accent2); line-height: 1; }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* ボタン */
+  .btn {
+    width: 100%; padding: 14px; border: none; border-radius: var(--radius);
+    font-family: inherit; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: opacity .15s, transform .1s;
+    margin-bottom: 10px; letter-spacing: .3px;
+  }
+  .btn:active { opacity: .8; transform: scale(.98); }
+  .btn-primary { background: var(--accent); color: #0d1117; }
+  .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+  .btn-ai { background: linear-gradient(135deg, #bc8cff, #58a6ff); color: #0d1117; }
+  .btn-success { background: var(--ok); color: #0d1117; }
+  .btn-sm {
+    width: auto; padding: 6px 14px; font-size: 13px;
+    background: var(--bg3); color: var(--muted);
+    border: 1px solid var(--border); border-radius: 8px;
+    cursor: pointer; font-family: inherit; font-weight: 500;
+  }
+
+  /* フォーム */
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+  .field input, .field select, .field textarea {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 10px; padding: 11px 13px; color: var(--text);
+    font-family: inherit; font-size: 14px; outline: none;
+    transition: border-color .2s;
+    -webkit-appearance: none; appearance: none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent);
+  }
+  .field textarea { height: 80px; resize: vertical; }
+  .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238b949e' d='M1 1l5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+  /* スライダー */
+  .severity-display {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+  }
+  .severity-badge {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 18px; color: #0d1117; flex-shrink: 0;
+    transition: background .3s;
+  }
+  .severity-text { font-size: 13px; color: var(--muted); }
+  input[type=range] {
+    width: 100%; height: 6px; border-radius: 3px;
+    background: var(--bg3); border: none; outline: none;
+    -webkit-appearance: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 22px; height: 22px;
+    border-radius: 50%; background: var(--accent);
+    border: 3px solid var(--bg); cursor: pointer;
+  }
+
+  /* 記録カード */
+  .record-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 13px; margin-bottom: 8px;
+  }
+  .record-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .record-badge {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 14px; color: #0d1117; flex-shrink: 0;
+  }
+  .record-date { font-size: 14px; font-weight: 700; }
+  .record-time { font-size: 11px; color: var(--muted); }
+  .record-delete { margin-left: auto; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 15px; padding: 4px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tag {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 6px; padding: 2px 8px; font-size: 11px; color: #c9d1d9;
+  }
+  .tag-med { background: rgba(188,140,255,.15); border-color: rgba(188,140,255,.3); color: var(--accent2); }
+  .tag-act { background: rgba(63,185,80,.12); border-color: rgba(63,185,80,.25); color: #7ee787; }
+  .tag-heat { background: rgba(247,129,102,.12); border-color: rgba(247,129,102,.25); color: #ffa07a; }
+  .record-memo { margin-top: 8px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  /* AI */
+  .ai-result {
+    background: linear-gradient(135deg, rgba(88,166,255,.08), rgba(188,140,255,.08));
+    border: 1px solid rgba(188,140,255,.25);
+    border-radius: var(--radius); padding: 18px;
+    line-height: 1.8; font-size: 14px; white-space: pre-wrap;
+    color: var(--text);
+  }
+  .ai-loading { text-align: center; padding: 50px 20px; }
+  .ai-loading .spinner { font-size: 40px; animation: spin 2s linear infinite; display: inline-block; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  /* ボトムナビ */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(13,17,23,.97);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding: 6px 0 env(safe-area-inset-bottom, 6px);
+    backdrop-filter: blur(12px);
+  }
+  .nav-item {
+    flex: 1; background: none; border: none;
+    color: var(--muted); cursor: pointer;
+    padding: 6px 0; font-family: inherit;
+    transition: color .15s;
+  }
+  .nav-item.active { color: var(--accent); }
+  .nav-item .nav-icon { font-size: 20px; display: block; }
+  .nav-item .nav-label { font-size: 10px; display: block; margin-top: 2px; font-weight: 500; }
+
+  /* セクションラベル */
+  .section-label {
+    font-size: 11px; color: var(--muted); letter-spacing: 1.5px;
+    text-transform: uppercase; margin-bottom: 10px; font-weight: 700;
+  }
+
+  /* トースト */
+  .toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+    background: var(--ok); color: #0d1117;
+    padding: 10px 20px; border-radius: 24px;
+    font-weight: 700; font-size: 14px;
+    opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 200;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+
+  /* 空状態 */
+  .empty { text-align: center; padding: 50px 20px; color: var(--muted); }
+  .empty .empty-icon { font-size: 48px; margin-bottom: 12px; }
+
+  /* 気圧グラフ */
+  .graph-wrap {
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+  }
+  .graph-canvas-wrap {
+    position: relative; min-width: 600px;
+  }
+  canvas#pressureChart {
+    width: 100%; display: block;
+  }
+  .graph-legend {
+    display: flex; gap: 16px; margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted);
+  }
+  .legend-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+  }
+  .pressure-status {
+    display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .status-card {
+    flex: 1; min-width: 80px; background: var(--bg2);
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px; text-align: center;
+  }
+  .status-val { font-size: 20px; font-weight: 900; color: var(--accent); }
+  .status-label { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .alert-box {
+    border-radius: 10px; padding: 10px 14px; margin-bottom: 12px;
+    font-size: 13px; font-weight: 700;
+  }
+  .alert-danger { background: rgba(247,129,102,.15); border: 1px solid rgba(247,129,102,.4); color: #ffa07a; }
+  .alert-warn { background: rgba(250,204,21,.1); border: 1px solid rgba(250,204,21,.3); color: #fde047; }
+  .alert-ok { background: rgba(63,185,80,.1); border: 1px solid rgba(63,185,80,.3); color: #7ee787; }
+
+    font-size: 12px; font-weight: 700; color: var(--accent);
+    letter-spacing: 1px; padding: 8px 0 6px;
+    border-bottom: 1px solid var(--border); margin-bottom: 8px;
+  }
+  /* 下書きバナー */
+  .draft-banner {
+    background: rgba(250,204,21,.1); border: 1px solid rgba(250,204,21,.35);
+    border-radius: var(--radius); padding: 12px 14px;
+    margin-bottom: 12px; display: flex; align-items: center; gap: 10px; cursor: pointer;
+  }
+  .draft-banner:active { opacity: .8; }
+  .draft-icon { font-size: 22px; }
+  .draft-text { flex: 1; }
+  .draft-title { font-size: 13px; font-weight: 700; color: #fde047; }
+  .draft-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .draft-clear { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 4px; }
+  /* 編集バッジ */
+  .edit-badge {
+    display: inline-block; background: rgba(250,204,21,.15);
+    border: 1px solid rgba(250,204,21,.3); border-radius: 6px;
+    font-size: 11px; color: #fde047; padding: 2px 8px; margin-bottom: 14px;
+  }
+  /* 記録カードアクション */
+  .record-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .btn-edit {
+    flex: 1; padding: 7px; border: 1px solid rgba(88,166,255,.3);
+    background: rgba(88,166,255,.08); color: var(--accent);
+    border-radius: 8px; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .btn-del {
+    flex: 1; padding: 7px; border: 1px solid rgba(247,129,102,.3);
+    background: rgba(247,129,102,.08); color: var(--warn);
+    border-radius: 8px; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<div class="header">
+  <button class="header-back" id="headerBack" onclick="goBack()">←</button>
+  <div class="header-title" id="headerTitle">頭痛・体調ログ</div>
+  <div class="header-sub" id="headerSub"></div>
+</div>
+
+<!-- トースト -->
+<div class="toast" id="toast">✓ 保存しました</div>
+
+<!-- ========== ホーム ========== -->
+<div class="page active" id="page-home">
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-num" id="statTotal">0</div>
+      <div class="stat-label">記録件数</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statAvg">—</div>
+      <div class="stat-label">平均頭痛強度</div>
+    </div>
+  </div>
+
+  <div id="draftBanner"></div>
+  <div class="section-label">アクション</div>
+  <button class="btn btn-primary" onclick="showPage('add')">＋ 記録を追加（過去日付もOK）</button>
+  <button class="btn btn-secondary" onclick="showPage('list')">📋 記録一覧・編集</button>
+  <button class="btn btn-ai" onclick="showPage('ai'); runAI()">🧠 AIトリガー分析</button>
+
+  <div class="section-label" style="margin-top:6px">最近の記録</div>
+  <div id="homeRecent"></div>
+</div>
+
+<!-- ========== 記録追加/編集 ========== -->
+<div class="page" id="page-add">
+  <div id="editBadge" style="display:none"><div class="edit-badge">✏️ 編集モード</div></div>
+  <div id="draftBadge" style="display:none"><div class="edit-badge" style="color:#93c5fd;border-color:rgba(147,197,253,.3);background:rgba(147,197,253,.1)">📝 下書きから復元</div></div>
+  <div class="field">
+    <label>📅 日付（過去の日付も入力できます）</label>
+    <input type="date" id="fDate">
+  </div>
+
+  <div class="field">
+    <label>💢 頭痛の強さ</label>
+    <div class="severity-display">
+      <div class="severity-badge" id="severityBadge">0</div>
+      <div>
+        <div id="severityLabel" style="font-size:14px; font-weight:700;">頭痛なし</div>
+        <div class="severity-text">0〜10で記録</div>
+      </div>
+    </div>
+    <input type="range" min="0" max="10" value="0" id="fSeverity" oninput="updateSeverity(this.value)">
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px">
+      <span>なし(0)</span><span>軽い(3)</span><span>中(5)</span><span>強い(7)</span><span>最大(10)</span>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>🕐 頭痛の時間帯</label>
+    <select id="fHeadacheTime">
+      <option value="">選択（任意）</option>
+      <option value="明け方3〜6時">明け方（3〜6時）※パターン重要</option>
+      <option value="朝6〜10時">朝（6〜10時）</option>
+      <option value="午前">午前</option>
+      <option value="午後">午後</option>
+      <option value="夜">夜</option>
+      <option value="一日中">一日中</option>
+      <option value="翌日一日中">翌日一日中（遅延型）</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>🥵 熱中症・暑さ症状</label>
+    <select id="fHeat">
+      <option value="">なし</option>
+      <option value="発汗のみ">発汗のみ</option>
+      <option value="発汗＋頭痛">発汗＋頭痛</option>
+      <option value="発汗＋頭痛＋嘔吐">発汗＋頭痛＋嘔吐（重症）</option>
+      <option value="嘔吐あり">嘔吐あり</option>
+      <option value="翌日に遅延発症">翌日に遅延発症</option>
+      <option value="その他">その他（メモに記録）</option>
+    </select>
+  </div>
+
+  <div class="grid3">
+    <div class="field">
+      <label>☁️ 天気</label>
+      <select id="fWeather">
+        <option value="">—</option>
+        <option value="晴れ">☀️晴れ</option>
+        <option value="曇り">☁️曇り</option>
+        <option value="雨">🌧雨</option>
+        <option value="台風">🌀台風</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>🌡️ 気温℃</label>
+      <input type="number" id="fTemp" placeholder="32">
+    </div>
+    <div class="field">
+      <label>💧 湿度%</label>
+      <input type="number" id="fHumidity" placeholder="80">
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="field">
+      <label>😴 睡眠時間(h)</label>
+      <input type="number" step="0.5" id="fSleep" placeholder="例: 3.5">
+    </div>
+    <div class="field">
+      <label>⏰ 起床時間</label>
+      <input type="time" id="fWake">
+    </div>
+  </div>
+
+  <div class="field">
+    <label>💊 飲んだ薬</label>
+    <select id="fMed">
+      <option value="">なし</option>
+      <option value="リザトリプタン10mg">リザトリプタン10mg（片頭痛薬）</option>
+      <option value="イブプロフェン">イブプロフェン（市販）</option>
+      <option value="リザトリプタン＋イブ">両方</option>
+      <option value="点滴（生食＋頭痛薬）">点滴（病院）</option>
+      <option value="その他">その他</option>
+    </select>
+  </div>
+
+  <div class="field" id="fieldMedEffect" style="display:none">
+    <label>✅ 薬の効果</label>
+    <select id="fMedEffect">
+      <option value="">選択</option>
+      <option value="よく効いた">よく効いた</option>
+      <option value="少し効いた">少し効いた</option>
+      <option value="効かなかった">効かなかった</option>
+      <option value="眠気あり">眠気あり（リザトリプタン）</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>🩺 血圧（測った時だけ）</label>
+    <div class="grid2">
+      <div>
+        <input type="number" id="fBpSys" placeholder="上（収縮期）例: 148">
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;text-align:center">上（収縮期）</div>
+      </div>
+      <div>
+        <input type="number" id="fBpDia" placeholder="下（拡張期）例: 92">
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;text-align:center">下（拡張期）</div>
+      </div>
+    </div>
+    <div id="bpWarning" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(247,129,102,.15);border:1px solid rgba(247,129,102,.3);border-radius:8px;font-size:12px;color:#ffa07a"></div>
+  </div>
+
+  <div class="field">
+    <label>🥤 水分・食事</label>
+    <input type="text" id="fHydration" placeholder="例：水1.5L、朝食抜き、おかゆ">
+  </div>
+
+  <div class="field">
+    <label>🏃 活動内容</label>
+    <input type="text" id="fActivity" placeholder="例：沖縄旅行・砂浜2h、室内勤務、SUP">
+  </div>
+
+  <div class="field">
+    <label>📝 メモ（状況・気づき）</label>
+    <textarea id="fMemo" placeholder="例：寝不足3時間、砂浜で日傘のみ、夜は元気だったのに明け方4時に頭痛で起きた"></textarea>
+  </div>
+
+  <button class="btn btn-primary" id="saveBtn" onclick="saveRecord()">💾 保存する</button>
+  <button class="btn" style="background:rgba(250,204,21,.15);color:#fde047;border:1px solid rgba(250,204,21,.3);" onclick="saveDraft()">📝 下書き保存（後で続ける）</button>
+  <button class="btn btn-secondary" onclick="confirmCancel()">キャンセル</button>
+</div>
+
+<!-- ========== 記録一覧 ========== -->
+<div class="page" id="page-list">
+  <div id="listContent"></div>
+</div>
+
+<!-- ========== 気圧グラフ ========== -->
+<div class="page" id="page-graph">
+  <div id="graphContent">
+    <div class="ai-loading">
+      <div class="spinner">🌡️</div>
+      <div style="margin-top:16px;color:var(--muted)">気圧データを取得中...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== AI分析 ========== -->
+<div class="page" id="page-ai">
+  <div id="aiContent">
+    <div class="ai-loading">
+      <div class="spinner">🧠</div>
+      <div style="margin-top:16px;color:var(--muted)">記録を分析中...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ボトムナビ -->
+<div class="bottom-nav">
+  <button class="nav-item active" id="nav-home" onclick="showPage('home')">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-label">ホーム</span>
+  </button>
+  <button class="nav-item" id="nav-add" onclick="showPage('add')">
+    <span class="nav-icon">＋</span>
+    <span class="nav-label">記録</span>
+  </button>
+  <button class="nav-item" id="nav-list" onclick="showPage('list')">
+    <span class="nav-icon">📋</span>
+    <span class="nav-label">一覧</span>
+  </button>
+  <button class="nav-item" id="nav-graph" onclick="showPage('graph'); loadPressureGraph()">
+    <span class="nav-icon">📈</span>
+    <span class="nav-label">気圧</span>
+  </button>
+  <button class="nav-item" id="nav-ai" onclick="showPage('ai'); runAI()">
+    <span class="nav-icon">🧠</span>
+    <span class="nav-label">AI分析</span>
+  </button>
+</div>
+
+<script>
+// ============================================================
+// データ管理（localStorage使用 → オフライン動作）
+// ============================================================
+const STORAGE_KEY = 'headache_v2';
+const DRAFT_KEY = 'headache_draft';
+
+function loadRecords() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+}
+function saveRecords(records) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+}
+function loadDraft() {
+  try { return JSON.parse(localStorage.getItem(DRAFT_KEY)); } catch { return null; }
+}
+function saveDraftData(data) { localStorage.setItem(DRAFT_KEY, JSON.stringify(data)); }
+function clearDraft() { localStorage.removeItem(DRAFT_KEY); }
+
+// ============================================================
+// 重症度ラベル・色
+// ============================================================
+function severityColor(n) {
+  n = Number(n);
+  if (n === 0) return '#3fb950';
+  if (n <= 2) return '#7ee787';
+  if (n <= 4) return '#facc15';
+  if (n <= 6) return '#fb923c';
+  if (n <= 8) return '#f87171';
+  return '#ff4444';
+}
+function severityLabel(n) {
+  const labels = ['頭痛なし','ごく軽い','軽い','軽〜中','中程度','中〜強','強い','かなり強い','非常に強い','激しい','最大・寝込む'];
+  return labels[Math.min(Number(n),10)];
+}
+
+// ============================================================
+// スライダー更新
+// ============================================================
+function updateSeverity(v) {
+  const badge = document.getElementById('severityBadge');
+  const label = document.getElementById('severityLabel');
+  badge.textContent = v;
+  badge.style.background = severityColor(v);
+  label.textContent = severityLabel(v);
+}
+
+// 薬選択で効果フィールド表示
+document.getElementById('fMed').addEventListener('change', function() {
+  document.getElementById('fieldMedEffect').style.display = this.value ? 'block' : 'none';
+});
+
+// 血圧入力で警告表示
+function checkBP() {
+  const sys = Number(document.getElementById('fBpSys').value);
+  const dia = Number(document.getElementById('fBpDia').value);
+  const warn = document.getElementById('bpWarning');
+  if (!sys && !dia) { warn.style.display = 'none'; return; }
+  let msg = '';
+  if (sys >= 180 || dia >= 110) msg = '⚠️ 非常に高い血圧です。頭痛が激しい場合は医療機関へ。';
+  else if (sys >= 140 || dia >= 90) msg = '📌 高血圧域です（救急時に近い値）。医師に伝えましょう。';
+  else if (sys >= 130 || dia >= 80) msg = '📋 やや高め。記録を続けて医師に見せましょう。';
+  else if (sys > 0) msg = '✅ 正常範囲です。';
+  warn.style.display = msg ? 'block' : 'none';
+  warn.textContent = msg;
+}
+document.getElementById('fBpSys').addEventListener('input', checkBP);
+document.getElementById('fBpDia').addEventListener('input', checkBP);
+
+// 編集モード状態
+let editingId = null; // null=新規、数値=編集中のID
+let currentPage = 'home';
+let prevPage = 'home';
+const pageTitles = {
+  home: '頭痛・体調ログ',
+  add: '記録を追加',
+  list: '記録一覧',
+  graph: '気圧グラフ',
+  ai: 'AIトリガー分析'
+};
+
+function showPage(page) {
+  prevPage = currentPage;
+  currentPage = page;
+
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + page);
+  if (navEl) navEl.classList.add('active');
+
+  const backBtn = document.getElementById('headerBack');
+  backBtn.style.display = page === 'home' ? 'none' : 'block';
+
+  document.getElementById('headerTitle').textContent = pageTitles[page];
+
+  if (page === 'add') {
+    // 編集モードでない場合のみリセット
+    if (editingId === null) {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth()+1).padStart(2,'0');
+      const dd = String(today.getDate()).padStart(2,'0');
+      document.getElementById('fDate').value = `${yyyy}-${mm}-${dd}`;
+      document.getElementById('fSeverity').value = 0;
+      updateSeverity(0);
+      resetForm();
+      document.getElementById('editBadge').style.display = 'none';
+      document.getElementById('draftBadge').style.display = 'none';
+    }
+    document.getElementById('saveBtn').textContent = editingId ? '✏️ 更新する' : '💾 保存する';
+  }
+  if (page === 'list') renderList();
+  if (page === 'home') renderHome();
+
+  const records = loadRecords();
+  document.getElementById('headerSub').textContent = page === 'list' ? `${records.length}件` : '';
+}
+
+function goBack() { showPage(prevPage === currentPage ? 'home' : prevPage); }
+
+// ============================================================
+// フォームリセット
+// ============================================================
+function resetForm() {
+  editingId = null;
+  ['fHeadacheTime','fHeat','fWeather','fMed','fMedEffect'].forEach(id => {
+    document.getElementById(id).selectedIndex = 0;
+  });
+  ['fTemp','fHumidity','fSleep','fWake','fHydration','fActivity','fMemo','fBpSys','fBpDia'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('fieldMedEffect').style.display = 'none';
+  document.getElementById('bpWarning').style.display = 'none';
+}
+
+// フォームからデータ取得
+function getFormData() {
+  return {
+    date: document.getElementById('fDate').value,
+    severity: Number(document.getElementById('fSeverity').value),
+    headacheTime: document.getElementById('fHeadacheTime').value,
+    heat: document.getElementById('fHeat').value,
+    weather: document.getElementById('fWeather').value,
+    temp: document.getElementById('fTemp').value,
+    humidity: document.getElementById('fHumidity').value,
+    sleep: document.getElementById('fSleep').value,
+    wake: document.getElementById('fWake').value,
+    med: document.getElementById('fMed').value,
+    medEffect: document.getElementById('fMedEffect').value,
+    hydration: document.getElementById('fHydration').value,
+    activity: document.getElementById('fActivity').value,
+    memo: document.getElementById('fMemo').value,
+    bpSys: document.getElementById('fBpSys').value,
+    bpDia: document.getElementById('fBpDia').value,
+  };
+}
+
+// フォームにデータをセット
+function setFormData(r) {
+  document.getElementById('fDate').value = r.date || '';
+  document.getElementById('fSeverity').value = r.severity || 0;
+  updateSeverity(r.severity || 0);
+  const selects = {fHeadacheTime:'headacheTime',fHeat:'heat',fWeather:'weather',fMed:'med',fMedEffect:'medEffect'};
+  Object.entries(selects).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    el.value = r[key] || '';
+  });
+  ['fTemp','fHumidity','fSleep','fWake','fHydration','fActivity','fMemo','fBpSys','fBpDia'].forEach(id => {
+    const key = id.replace('f','').replace(/^./, c => c.toLowerCase());
+    const keyMap = {temp:'temp',humidity:'humidity',sleep:'sleep',wake:'wake',hydration:'hydration',activity:'activity',memo:'memo',bpSys:'bpSys',bpDia:'bpDia'};
+    const actualKey = {fTemp:'temp',fHumidity:'humidity',fSleep:'sleep',fWake:'wake',fHydration:'hydration',fActivity:'activity',fMemo:'memo',fBpSys:'bpSys',fBpDia:'bpDia'}[id];
+    document.getElementById(id).value = r[actualKey] || '';
+  });
+  document.getElementById('fieldMedEffect').style.display = r.med ? 'block' : 'none';
+  checkBP();
+}
+
+// 保存（新規 or 編集）
+function saveRecord() {
+  const data = getFormData();
+  if (!data.date) { alert('日付を入力してください'); return; }
+
+  let records = loadRecords();
+  if (editingId) {
+    // 編集モード：既存レコードを上書き
+    records = records.map(r => r.id === editingId ? { ...r, ...data } : r);
+    showToast('✓ 更新しました！');
+  } else {
+    // 新規
+    records.push({ id: Date.now(), ...data });
+    showToast('✓ 保存しました！');
+  }
+  records.sort((a, b) => b.date.localeCompare(a.date));
+  saveRecords(records);
+  clearDraft();
+  editingId = null;
+  setTimeout(() => showPage('home'), 800);
+}
+
+// 下書き保存
+function saveDraft() {
+  const data = getFormData();
+  saveDraftData({ ...data, editingId });
+  showToast('📝 下書き保存しました');
+  setTimeout(() => showPage('home'), 800);
+}
+
+// 下書きを開く
+function openDraft() {
+  const draft = loadDraft();
+  if (!draft) return;
+  editingId = draft.editingId || null;
+  document.getElementById('editBadge').style.display = 'none';
+  document.getElementById('draftBadge').style.display = 'block';
+  setFormData(draft);
+  document.getElementById('saveBtn').textContent = editingId ? '✏️ 更新する' : '💾 保存する';
+  showPage('add');
+}
+
+// 下書きを削除
+function discardDraft() {
+  if (confirm('下書きを削除しますか？')) {
+    clearDraft();
+    renderHome();
+    showToast('下書きを削除しました');
+  }
+}
+
+// キャンセル確認
+function confirmCancel() {
+  editingId = null;
+  showPage('home');
+}
+
+// 編集開始
+function editRecord(id) {
+  const records = loadRecords();
+  const r = records.find(rec => rec.id === id);
+  if (!r) return;
+  editingId = id;
+  document.getElementById('editBadge').style.display = 'block';
+  document.getElementById('draftBadge').style.display = 'none';
+  setFormData(r);
+  document.getElementById('saveBtn').textContent = '✏️ 更新する';
+  // showPage の add 初期化を飛ばすため直接ページ切り替え
+  prevPage = currentPage;
+  currentPage = 'add';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-add').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('headerBack').style.display = 'block';
+  document.getElementById('headerTitle').textContent = '記録を編集';
+  window.scrollTo(0, 0);
+}
+
+// ============================================================
+// トースト
+// ============================================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ============================================================
+// ホーム描画
+// ============================================================
+function renderHome() {
+  const records = loadRecords();
+  document.getElementById('statTotal').textContent = records.length;
+
+  if (records.length > 0) {
+    const avg = records.reduce((s, r) => s + r.severity, 0) / records.length;
+    document.getElementById('statAvg').textContent = avg.toFixed(1);
+  }
+
+  // 下書きバナー
+  const draft = loadDraft();
+  const banner = document.getElementById('draftBanner');
+  if (draft && draft.date) {
+    banner.innerHTML = `
+      <div class="draft-banner" onclick="openDraft()">
+        <div class="draft-icon">📝</div>
+        <div class="draft-text">
+          <div class="draft-title">下書きがあります</div>
+          <div class="draft-sub">${draft.date}の記録 — タップして続きを入力</div>
+        </div>
+        <button class="draft-clear" onclick="event.stopPropagation();discardDraft()">✕</button>
+      </div>`;
+  } else {
+    banner.innerHTML = '';
+  }
+
+  const container = document.getElementById('homeRecent');
+  if (records.length === 0) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">📝</div><div>まだ記録がありません<br>＋ボタンから追加しましょう</div></div>';
+    return;
+  }
+  container.innerHTML = records.slice(0, 5).map(r => recordCardHTML(r, false)).join('');
+}
+
+// ============================================================
+// 一覧描画（月グループ）
+// ============================================================
+function renderList() {
+  const records = loadRecords();
+  const container = document.getElementById('listContent');
+
+  if (records.length === 0) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div>記録がありません</div></div>';
+    return;
+  }
+
+  // 月ごとにグループ化
+  const groups = {};
+  records.forEach(r => {
+    const m = r.date.slice(0, 7); // YYYY-MM
+    if (!groups[m]) groups[m] = [];
+    groups[m].push(r);
+  });
+
+  let html = '';
+  Object.keys(groups).sort((a,b) => b.localeCompare(a)).forEach(month => {
+    const [y, m] = month.split('-');
+    html += `<div class="month-header">${y}年${parseInt(m)}月（${groups[month].length}件）</div>`;
+    html += groups[month].map(r => recordCardHTML(r, true)).join('');
+  });
+  container.innerHTML = html;
+}
+
+// ============================================================
+// 記録カードHTML
+// ============================================================
+function recordCardHTML(r, showDelete) {
+  const tags = [];
+  if (r.bpSys || r.bpDia) {
+    const bpColor = r.bpSys >= 140 ? 'tag-heat' : (r.bpSys >= 130 ? '' : '');
+    tags.push(`<span class="tag ${bpColor}">🩺${r.bpSys||'?'}/${r.bpDia||'?'}</span>`);
+  }
+  if (r.weather) tags.push(`<span class="tag">${r.weather}</span>`);
+  if (r.temp) tags.push(`<span class="tag">${r.temp}℃</span>`);
+  if (r.humidity) tags.push(`<span class="tag">湿度${r.humidity}%</span>`);
+  if (r.sleep) tags.push(`<span class="tag">睡眠${r.sleep}h</span>`);
+  if (r.wake) tags.push(`<span class="tag">起床${r.wake}</span>`);
+  if (r.med) tags.push(`<span class="tag tag-med">💊${r.med.slice(0,6)}</span>`);
+  if (r.medEffect) tags.push(`<span class="tag tag-med">${r.medEffect}</span>`);
+  if (r.activity) tags.push(`<span class="tag tag-act">🏃${r.activity.slice(0,14)}</span>`);
+  if (r.heat) tags.push(`<span class="tag tag-heat">🥵${r.heat.slice(0,10)}</span>`);
+
+  const delBtn = showDelete ? `<button class="record-delete" onclick="deleteRecord(${r.id})">🗑</button>` : '';
+
+  const actions = showDelete ? `
+    <div class="record-actions">
+      <button class="btn-edit" onclick="editRecord(${r.id})">✏️ 編集</button>
+      <button class="btn-del" onclick="deleteRecord(${r.id})">🗑 削除</button>
+    </div>` : '';
+
+  return `
+  <div class="record-card">
+    <div class="record-header">
+      <div class="record-badge" style="background:${severityColor(r.severity)}">${r.severity}</div>
+      <div>
+        <div class="record-date">${r.date}</div>
+        ${r.headacheTime ? `<div class="record-time">${r.headacheTime}</div>` : ''}
+      </div>
+    </div>
+    ${tags.length ? `<div class="tags">${tags.join('')}</div>` : ''}
+    ${r.memo ? `<div class="record-memo">📝 ${r.memo}</div>` : ''}
+    ${actions}
+  </div>`;
+}
+
+// ============================================================
+// 削除
+// ============================================================
+function deleteRecord(id) {
+  if (!confirm('この記録を削除しますか？')) return;
+  const records = loadRecords().filter(r => r.id !== id);
+  saveRecords(records);
+  renderList();
+  showToast('削除しました');
+}
+
+// ============================================================
+// AI分析（WiFiがある時だけ動作）
+// ============================================================
+async function runAI() {
+  const records = loadRecords();
+  const container = document.getElementById('aiContent');
+
+  if (records.length === 0) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">🧠</div><div>記録がまだありません<br>数件記録してから分析しましょう</div></div>';
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="ai-loading">
+      <div class="spinner">🧠</div>
+      <div style="margin-top:16px;color:var(--muted)">${records.length}件の記録を分析中...</div>
+      <div style="margin-top:6px;font-size:12px;color:var(--muted)">WiFiが必要です・少々お待ちください</div>
+    </div>`;
+
+  const summary = records.map(r => [
+    `日付:${r.date}`,
+    `頭痛強度:${r.severity}/10`,
+    r.headacheTime ? `時間帯:${r.headacheTime}` : '',
+    r.heat ? `熱症状:${r.heat}` : '',
+    r.weather ? `天気:${r.weather}` : '',
+    r.temp ? `気温:${r.temp}℃` : '',
+    r.humidity ? `湿度:${r.humidity}%` : '',
+    r.sleep ? `睡眠:${r.sleep}h` : '',
+    (r.bpSys || r.bpDia) ? `血圧:${r.bpSys||'?'}/${r.bpDia||'?'}` : '',
+    r.wake ? `起床:${r.wake}` : '',
+    r.med ? `薬:${r.med}` : '',
+    r.medEffect ? `効果:${r.medEffect}` : '',
+    r.hydration ? `水分食事:${r.hydration}` : '',
+    r.activity ? `活動:${r.activity}` : '',
+    r.memo ? `メモ:${r.memo}` : '',
+  ].filter(Boolean).join('、')).join('\n');
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1200,
+        system: `あなたは頭痛・熱中症の専門的なトリガー分析アシスタントです。
+患者の日々の記録を分析し、以下を日本語で回答してください：
+
+① 頭痛が起きやすいパターン（時間帯・曜日・気温・天気・気圧変化など）
+② 熱中症との関係（遅延発症パターンがあれば特筆）
+③ 睡眠との相関（寝不足・起床時間との関係）
+④ 薬の効果パターン
+⑤ 予防のための具体的アドバイス3〜5点
+
+親しみやすく、でも具体的に。絵文字を使ってわかりやすく。`,
+        messages: [{ role: 'user', content: `以下の体調記録（${records.length}件）を分析してください：\n\n${summary}` }]
+      })
+    });
+
+    if (!res.ok) throw new Error('API error');
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '分析結果を取得できませんでした。';
+
+    container.innerHTML = `
+      <div class="ai-result">${text}</div>
+      <div style="margin-top:12px">
+        <button class="btn btn-ai" onclick="runAI()">🔄 再分析する</button>
+        <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px">
+          ※ AI分析はWiFi接続時のみ動作します<br>記録・閲覧はオフラインでも使えます
+        </div>
+      </div>`;
+  } catch(e) {
+    container.innerHTML = `
+      <div class="card" style="border-color:rgba(247,129,102,.3)">
+        <div style="color:var(--warn);font-weight:700;margin-bottom:8px">⚠️ 分析に失敗しました</div>
+        <div style="color:var(--muted);font-size:13px">
+          WiFiに接続されているか確認してください。<br>
+          記録の保存・閲覧はオフラインでも使えます。
+        </div>
+      </div>
+      <button class="btn btn-ai" onclick="runAI()">🔄 再試行</button>`;
+  }
+}
+
+// ============================================================
+// 初期表示
+// ============================================================
+renderHome();
+updateSeverity(0);
+
+// ============================================================
+// 気圧グラフ（Open-Meteo API + Canvas描画）
+// ============================================================
+let pressureLoaded = false;
+
+async function loadPressureGraph() {
+  const container = document.getElementById('graphContent');
+
+  // ローディング表示
+  container.innerHTML = `
+    <div class="ai-loading">
+      <div class="spinner">🌡️</div>
+      <div style="margin-top:16px;color:var(--muted)">現在地の気圧を取得中...<br><span style="font-size:11px">位置情報の許可が必要です</span></div>
+    </div>`;
+
+  try {
+    // 位置情報取得
+    const pos = await new Promise((res, rej) =>
+      navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000 })
+    );
+    const { latitude: lat, longitude: lon } = pos.coords;
+
+    // Open-Meteo API（気圧・気温・天気コード を1時間単位で取得）
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=surface_pressure,temperature_2m,weathercode&forecast_days=2&timezone=Asia%2FTokyo`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const times = data.hourly.time;           // ["2026-04-16T00:00", ...]
+    const pressures = data.hourly.surface_pressure; // hPa
+    const temps = data.hourly.temperature_2m;
+
+    // 現在時刻インデックス
+    const now = new Date();
+    const nowStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}T${String(now.getHours()).padStart(2,'0')}:00`;
+    const nowIdx = times.findIndex(t => t === nowStr);
+    const startIdx = Math.max(0, nowIdx - 6);  // 6時間前から
+    const endIdx = Math.min(times.length - 1, nowIdx + 18); // 18時間後まで
+
+    const sliceTimes = times.slice(startIdx, endIdx + 1);
+    const slicePressures = pressures.slice(startIdx, endIdx + 1);
+    const sliceTemps = temps.slice(startIdx, endIdx + 1);
+
+    // 現在の気圧
+    const currentP = slicePressures[nowIdx - startIdx] || slicePressures[0];
+    const minP = Math.min(...slicePressures);
+    const maxP = Math.max(...slicePressures);
+    const diffP = (maxP - minP).toFixed(1);
+
+    // 気圧変化アラート判定
+    let alertHTML = '';
+    const recentDiff = nowIdx >= 3 ? (pressures[nowIdx] - pressures[nowIdx - 3]).toFixed(1) : 0;
+    if (Math.abs(recentDiff) >= 6) {
+      alertHTML = `<div class="alert-box alert-danger">⚠️ 直近3時間で${recentDiff}hPa変化！頭痛注意</div>`;
+    } else if (Math.abs(recentDiff) >= 3) {
+      alertHTML = `<div class="alert-box alert-warn">📌 直近3時間で${recentDiff}hPa変化。やや注意</div>`;
+    } else {
+      alertHTML = `<div class="alert-box alert-ok">✅ 気圧は安定しています</div>`;
+    }
+
+    // 過去の頭痛記録をグラフに重ねるための準備
+    const records = loadRecords();
+    const todayStr = now.toISOString().split('T')[0];
+    const todayRecords = records.filter(r => r.date === todayStr && r.severity > 0);
+
+    container.innerHTML = `
+      ${alertHTML}
+      <div class="pressure-status">
+        <div class="status-card">
+          <div class="status-val">${currentP ? currentP.toFixed(0) : '--'}</div>
+          <div class="status-label">現在(hPa)</div>
+        </div>
+        <div class="status-card">
+          <div class="status-val" style="color:var(--warn)">${minP.toFixed(0)}</div>
+          <div class="status-label">最低(hPa)</div>
+        </div>
+        <div class="status-card">
+          <div class="status-val" style="color:#7ee787">${maxP.toFixed(0)}</div>
+          <div class="status-label">最高(hPa)</div>
+        </div>
+        <div class="status-card">
+          <div class="status-val" style="color:var(--accent2)">±${diffP}</div>
+          <div class="status-label">変動幅</div>
+        </div>
+      </div>
+
+      <div class="graph-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div>気圧(hPa)</div>
+        ${todayRecords.length ? '<div class="legend-item"><div class="legend-dot" style="background:#f87171"></div>頭痛記録</div>' : ''}
+        <div class="legend-item" style="margin-left:auto;font-size:11px">← スライドで時間移動 →</div>
+      </div>
+
+      <div class="graph-wrap">
+        <div class="graph-canvas-wrap" style="min-width:${sliceTimes.length * 40}px; height:200px">
+          <canvas id="pressureChart" height="200"></canvas>
+        </div>
+      </div>
+
+      <div style="margin-top:16px">
+        <button class="btn btn-secondary" onclick="loadPressureGraph()" style="margin-bottom:8px">🔄 更新</button>
+        <div style="font-size:11px;color:var(--muted);text-align:center">
+          データ提供: Open-Meteo (無料・オープンソース)<br>
+          ${todayRecords.length ? `今日の頭痛記録 ${todayRecords.length}件をグラフに表示中` : '今日の頭痛記録はありません。記録すると重ねて表示されます。'}
+        </div>
+      </div>`;
+
+    // Canvas描画
+    drawPressureChart(sliceTimes, slicePressures, sliceTemps, nowIdx - startIdx, todayRecords, sliceTimes);
+
+  } catch (e) {
+    const isGeo = e.code !== undefined;
+    container.innerHTML = `
+      <div class="card" style="border-color:rgba(247,129,102,.3);margin-bottom:12px">
+        <div style="color:var(--warn);font-weight:700;margin-bottom:8px">⚠️ ${isGeo ? '位置情報が取得できません' : 'データ取得に失敗しました'}</div>
+        <div style="color:var(--muted);font-size:13px">
+          ${isGeo ? 'ブラウザの位置情報を許可してください。<br>設定 → プライバシー → 位置情報' : 'WiFiに接続されているか確認してください。'}
+        </div>
+      </div>
+      <button class="btn btn-secondary" onclick="loadPressureGraph()">🔄 再試行</button>`;
+  }
+}
+
+function drawPressureChart(times, pressures, temps, nowIdx, headacheRecords, allTimes) {
+  const canvas = document.getElementById('pressureChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.parentElement.offsetWidth;
+  const H = 200;
+  canvas.width = W;
+  canvas.height = H;
+
+  const PAD = { top: 20, right: 20, bottom: 40, left: 50 };
+  const chartW = W - PAD.left - PAD.right;
+  const chartH = H - PAD.top - PAD.bottom;
+
+  const minP = Math.min(...pressures) - 2;
+  const maxP = Math.max(...pressures) + 2;
+  const n = pressures.length;
+
+  const xPos = i => PAD.left + (i / (n - 1)) * chartW;
+  const yPos = p => PAD.top + chartH - ((p - minP) / (maxP - minP)) * chartH;
+
+  // 背景
+  ctx.fillStyle = '#161b22';
+  ctx.fillRect(0, 0, W, H);
+
+  // グリッド横線
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const p = minP + (maxP - minP) * (i / 4);
+    const y = yPos(p);
+    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(W - PAD.right, y); ctx.stroke();
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(p.toFixed(0), PAD.left - 4, y + 4);
+  }
+
+  // 現在時刻の縦線
+  if (nowIdx >= 0 && nowIdx < n) {
+    ctx.strokeStyle = 'rgba(250,204,21,0.4)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(xPos(nowIdx), PAD.top);
+    ctx.lineTo(xPos(nowIdx), H - PAD.bottom);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#fde047';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('現在', xPos(nowIdx), PAD.top - 4);
+  }
+
+  // 気圧グラデーション塗りつぶし
+  const grad = ctx.createLinearGradient(0, PAD.top, 0, H - PAD.bottom);
+  grad.addColorStop(0, 'rgba(88,166,255,0.3)');
+  grad.addColorStop(1, 'rgba(88,166,255,0)');
+  ctx.beginPath();
+  ctx.moveTo(xPos(0), yPos(pressures[0]));
+  for (let i = 1; i < n; i++) ctx.lineTo(xPos(i), yPos(pressures[i]));
+  ctx.lineTo(xPos(n - 1), H - PAD.bottom);
+  ctx.lineTo(xPos(0), H - PAD.bottom);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // 気圧折れ線
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(xPos(0), yPos(pressures[0]));
+  for (let i = 1; i < n; i++) ctx.lineTo(xPos(i), yPos(pressures[i]));
+  ctx.stroke();
+
+  // 時間ラベル（3時間ごと）
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  for (let i = 0; i < n; i++) {
+    const t = times[i];
+    const hour = t.slice(11, 16); // "HH:00"
+    const h = parseInt(hour);
+    if (h % 3 === 0) {
+      ctx.fillText(hour, xPos(i), H - PAD.bottom + 14);
+      // 縦グリッド
+      ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(xPos(i), PAD.top);
+      ctx.lineTo(xPos(i), H - PAD.bottom);
+      ctx.stroke();
+    }
+    // 日付変わり目
+    if (hour === '00:00') {
+      const dateLabel = t.slice(5, 10).replace('-', '/');
+      ctx.fillStyle = '#58a6ff';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillText(dateLabel, xPos(i), H - PAD.bottom + 26);
+      ctx.fillStyle = '#8b949e';
+      ctx.font = '10px sans-serif';
+    }
+  }
+
+  // 頭痛記録を赤丸で重ねる
+  headacheRecords.forEach(r => {
+    // 頭痛記録の時間帯からグラフ上のインデックスを探す
+    const timeMap = { '明け方3〜6時': '04:00', '朝6〜10時': '08:00', '午前': '10:00', '午後': '14:00', '夜': '20:00', '一日中': '12:00', '翌日一日中': '12:00' };
+    const targetHour = timeMap[r.headacheTime] || '12:00';
+    const targetStr = `${r.date}T${targetHour}`;
+    const idx = allTimes.findIndex(t => t === targetStr);
+    if (idx >= 0 && idx < n) {
+      const x = xPos(idx);
+      const y = yPos(pressures[idx]);
+      ctx.beginPath();
+      ctx.arc(x, y, 8, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(248,113,113,0.8)';
+      ctx.fill();
+      ctx.strokeStyle = '#f87171';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(r.severity, x, y + 3);
+    }
+  });
+}
+</script>
+</body>
+</html>pis.com/">
 <link href="./index_files/css2" rel="stylesheet">
 <style>
   :root {
